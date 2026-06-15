@@ -50,21 +50,16 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 		.toolbar {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
+			justify-content: flex-start;
 			gap: 8px;
 			margin-bottom: 12px;
-		}
-
-		.toolbar h2 {
-			margin: 0;
-			font-size: 13px;
-			font-weight: 600;
 		}
 
 		.toolbar-actions {
 			display: flex;
 			align-items: center;
 			gap: 6px;
+			margin-left: auto;
 			flex-shrink: 0;
 		}
 
@@ -4494,11 +4489,10 @@ function renderWebviewBody(isWindowModeView: boolean, colorPickerControls: strin
 
 function renderToolbar(): string {
 	return '<div class="toolbar">' +
-		'<h2>Copilot AI Customization Visualizer</h2>' +
+		'<button id="popout" class="window-mode-button" title="Open visualizer in a separate VS Code window" role="switch" aria-checked="false"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-label">Window-mode</span></button>' +
+		'<button id="about" class="about-button" title="About Copilot AI Customization Visualizer" aria-label="About Copilot AI Customization Visualizer">?</button>' +
 		'<div class="toolbar-actions">' +
 			'<button id="new-file" class="new-node-button" title="Create a new instruction agent prompt or skill" aria-label="Create a new instruction agent prompt or skill"><svg class="new-node-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round"></path></svg></button>' +
-			'<button id="popout" class="window-mode-button" title="Open visualizer in a separate VS Code window" role="switch" aria-checked="false"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-label">Window-mode</span></button>' +
-			'<button id="about" class="about-button" title="About Copilot AI Customization Visualizer" aria-label="About Copilot AI Customization Visualizer">?</button>' +
 			'<button id="settings" class="settings-button" title="Visualizer settings" aria-label="Visualizer settings"><svg class="settings-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>' +
 			'<button id="refresh" class="refresh-button" title="Refresh graph" aria-label="Refresh graph"><svg class="refresh-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M20 6v5h-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 18v-5h5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19 11a7 7 0 0 0-12-4l-3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 13a7 7 0 0 0 12 4l3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>' +
 		'</div>' +
