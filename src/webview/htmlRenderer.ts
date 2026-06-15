@@ -4,7 +4,7 @@ import { getDefaultToolPresets, toolChoiceHiddenCssRule } from '../tools/catalog
 import { VisualizerSettings, colorPickerFallbackColors, visualizerColorDefinitions, visualizerDefaultCssValues } from './settings';
 export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: boolean, settings: VisualizerSettings): string {
 		const nonce = getNonce();
-		const colorPickerControls = visualizerColorDefinitions.map(definition => '<label class="color-control" title="' + definition.description + '"><span><strong>' + definition.label + '</strong><small>' + definition.description + '</small></span><input class="color-picker" type="color" data-color-key="' + definition.key + '" value="' + (settings.colors[definition.key] || colorPickerFallbackColors[definition.key]) + '"></label>').join('');
+		const colorPickerControls = renderColorPickerControls(settings);
 
 		return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -1727,102 +1727,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 	</style>
 </head>
 <body>
-	<div class="toolbar">
-		<h2>Copilot AI Customization Visualizer</h2>
-		<div class="toolbar-actions">
-			<button id="new-file" class="new-node-button" title="Create a new instruction agent prompt or skill" aria-label="Create a new instruction agent prompt or skill"><svg class="new-node-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round"></path></svg></button>
-			<button id="popout" class="window-mode-button" title="Open visualizer in a separate VS Code window" role="switch" aria-checked="false"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-label">Window-mode</span></button>
-			<button id="about" class="about-button" title="About Copilot AI Customization Visualizer" aria-label="About Copilot AI Customization Visualizer">?</button>
-			<button id="settings" class="settings-button" title="Visualizer settings" aria-label="Visualizer settings"><svg class="settings-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-			<button id="refresh" class="refresh-button" title="Refresh graph" aria-label="Refresh graph"><svg class="refresh-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M20 6v5h-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 18v-5h5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19 11a7 7 0 0 0-12-4l-3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 13a7 7 0 0 0 12 4l3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-		</div>
-	</div>
-	<div id="about-dialog-backdrop" class="dialog-backdrop" hidden>
-		<form id="about-dialog" class="new-dialog">
-			<h3>About</h3>
-			<div class="about-info" aria-label="About Copilot AI Customization Visualizer">
-				<span><strong>Engineer:</strong> Jeffe747@github</span>
-				<span><strong>Agent:</strong> ChatGpt.5.5</span>
-			</div>
-			<div class="dialog-actions">
-				<button id="close-about" type="button">Close</button>
-			</div>
-		</form>
-	</div>
-	<div id="settings-dialog-backdrop" class="dialog-backdrop" hidden>
-		<form id="settings-dialog" class="new-dialog settings-dialog">
-			<h3>${isWindowModeView ? 'Window-mode Extension Settings' : 'Extension Settings'}</h3>
-			<section class="settings-section" aria-label="Layout settings">
-				<h4>Layout</h4>
-				<div class="settings-subsection" aria-label="Layout toggles">
-					<div class="settings-subsection-title">Toggles</div>
-					<div class="settings-checkbox-grid">
-						<label class="settings-toggle"><input id="side-by-side-layout" type="checkbox"><span>Side-by-side layout</span></label>
-						<label class="settings-toggle"><input id="hide-documentation-links" type="checkbox"><span>Hide documentation links</span></label>
-						<label class="settings-toggle"><input id="element-shadows-enabled" type="checkbox"><span>Element shadows</span></label>
-						<label class="settings-toggle"><input id="show-orphan-toggle" type="checkbox"><span>Show orphan toggle</span></label>
-						<label class="settings-toggle"><input id="debug-messages-enabled" type="checkbox"><span>Debug messages</span></label>
-					</div>
-				</div>
-				<div class="settings-subsection" aria-label="Layout sizing">
-					<div class="settings-subsection-title">Sizing</div>
-					<div class="settings-slider-grid">
-						<label class="size-control" for="node-size"><span>Element size</span><input id="node-size" type="range" min="0.85" max="2" step="0.05" value="1.1"><span id="node-size-value" class="size-value">110%</span></label>
-						<label class="size-control" for="text-size"><span>Editor text</span><input id="text-size" type="range" min="0.75" max="1.6" step="0.05" value="1"><span id="text-size-value" class="size-value">100%</span></label>
-					</div>
-				</div>
-			</section>
-			<section class="settings-section" aria-label="Token heatmap settings">
-				<h4>Token heatmap</h4>
-				<label class="settings-toggle"><input id="show-token-heatmap-toggle" type="checkbox"><span>Show visualizer toggle</span></label>
-				<label class="heatmap-model-control" for="heatmap-baseline-model"><span>Default baseline model</span><select id="heatmap-baseline-model"><option value="">Use graph-relative fallback</option></select></label>
-				<div class="threshold-grid">
-					<label class="threshold-control" for="heatmap-medium-threshold"><span><strong>Orange threshold</strong><small>Percent of baseline context</small></span><span class="threshold-input-wrap"><input id="heatmap-medium-threshold" type="number" min="1" max="98" step="1" value="38" inputmode="numeric"><span class="threshold-unit" aria-hidden="true">%</span></span></label>
-					<label class="threshold-control" for="heatmap-high-threshold"><span><strong>Red threshold</strong><small>Percent of baseline context</small></span><span class="threshold-input-wrap"><input id="heatmap-high-threshold" type="number" min="2" max="99" step="1" value="72" inputmode="numeric"><span class="threshold-unit" aria-hidden="true">%</span></span></label>
-				</div>
-			</section>
-			<section class="settings-section" aria-label="Visualizer colors">
-				<h4>Colors</h4>
-				<div class="color-grid">${colorPickerControls}</div>
-			</section>
-			<div class="dialog-actions">
-				<button id="close-settings" type="button">Close</button>
-			</div>
-		</form>
-	</div>
-	<div id="new-dialog-backdrop" class="dialog-backdrop" hidden>
-		<form id="new-dialog" class="new-dialog">
-			<h3>New customization</h3>
-			<label>Type<select id="new-kind"><option value="instruction">Instruction</option><option value="skill">Skill</option><option value="prompt">Prompt</option><option value="agent">Agent</option><option value="hook">Hook</option><option value="mcp">MCP server</option></select></label>
-			<label id="new-instruction-type-label" hidden>Instruction type<select id="new-instruction-type"><option value="scoped">Scoped instructions</option><option value="copilot">Copilot project instructions</option><option value="agents">All AI instructions</option><option value="claude">Claude instructions</option></select></label>
-			<label id="new-name-label">Name<input id="new-name" type="text" placeholder="my-customization" autocomplete="off"></label>
-			<div id="new-mcp-info" class="choice-empty" hidden>MCP servers are managed in VS Code's Extensions view.</div>
-			<div class="dialog-actions">
-				<button id="cancel-new" type="button">Cancel</button>
-				<button id="submit-new" type="submit">Create</button>
-			</div>
-		</form>
-	</div>
-	<div id="content-shell" class="content-shell">
-		<div id="inactive-overlay" class="inactive-overlay" hidden><div class="inactive-message">Window-mode is active. Use this toggle to return control here.</div></div>
-		<div id="docs-info" class="docs-info" aria-label="VS Code Copilot customization documentation">
-			<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/custom-instructions">Custom instructions documentation</button>
-			<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/custom-agents">Custom agents documentation</button>
-			<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/prompt-files">Prompt files documentation</button>
-			<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/agent-skills">Agent skills documentation</button>
-			<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/hooks">Hooks documentation</button>
-		</div>
-		<div id="workspace-panels" class="workspace-panels">
-			<section class="visualizer" aria-label="Graph visualizer">
-				<div id="visualizer-body" class="visualizer-body">
-					<div id="graph" class="graph"><div class="graph-overlay"><div class="legend"><span><i class="swatch" style="background: var(--instruction)"></i>Instructions</span><span><i class="swatch" style="background: var(--skill)"></i>Skill</span><span><i class="swatch" style="background: var(--prompt)"></i>Prompt</span><span><i class="swatch" style="background: var(--agent)"></i>Agent</span><span><i class="swatch" style="background: var(--handoff)"></i>Handoff</span><span><i class="swatch" style="background: var(--mcp)"></i>MCP</span><span><i class="swatch" style="background: var(--hook)"></i>Hook</span></div></div><div id="status" class="status">Scanning workspace...</div></div>
-				</div>
-			</section>
-			<section id="editor" class="editor" hidden aria-live="polite"></section>
-		</div>
-	</div>
-	<div id="error-toast" class="error-toast" role="alert" aria-live="assertive" hidden><div id="error-toast-message" class="error-toast-message"></div><button id="error-toast-close" class="error-toast-close" type="button" title="Dismiss error" aria-label="Dismiss error">x</button></div>
-	<div id="debug-toast" class="error-toast debug-toast" role="status" aria-live="polite" hidden><div><span class="debug-toast-title">Debug</span><div id="debug-toast-message" class="error-toast-message debug-toast-message"></div></div><button id="debug-toast-close" class="error-toast-close" type="button" title="Dismiss debug message" aria-label="Dismiss debug message">x</button></div>
+	${renderWebviewBody(isWindowModeView, colorPickerControls)}
 	<script nonce="${nonce}">
 		const isWindowModeView = ${isWindowModeView ? 'true' : 'false'};
 		const settingsMode = isWindowModeView ? 'window' : 'activity';
@@ -4573,6 +4478,138 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 </body>
 </html>`;
 	}
+
+function renderColorPickerControls(settings: VisualizerSettings): string {
+	return visualizerColorDefinitions.map(definition => '<label class="color-control" title="' + definition.description + '"><span><strong>' + definition.label + '</strong><small>' + definition.description + '</small></span><input class="color-picker" type="color" data-color-key="' + definition.key + '" value="' + (settings.colors[definition.key] || colorPickerFallbackColors[definition.key]) + '"></label>').join('');
+}
+
+function renderWebviewBody(isWindowModeView: boolean, colorPickerControls: string): string {
+	return renderToolbar() +
+		renderAboutDialog() +
+		renderSettingsDialog(isWindowModeView, colorPickerControls) +
+		renderNewCustomizationDialog() +
+		renderContentShell() +
+		renderToasts();
+}
+
+function renderToolbar(): string {
+	return '<div class="toolbar">' +
+		'<h2>Copilot AI Customization Visualizer</h2>' +
+		'<div class="toolbar-actions">' +
+			'<button id="new-file" class="new-node-button" title="Create a new instruction agent prompt or skill" aria-label="Create a new instruction agent prompt or skill"><svg class="new-node-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round"></path></svg></button>' +
+			'<button id="popout" class="window-mode-button" title="Open visualizer in a separate VS Code window" role="switch" aria-checked="false"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-label">Window-mode</span></button>' +
+			'<button id="about" class="about-button" title="About Copilot AI Customization Visualizer" aria-label="About Copilot AI Customization Visualizer">?</button>' +
+			'<button id="settings" class="settings-button" title="Visualizer settings" aria-label="Visualizer settings"><svg class="settings-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>' +
+			'<button id="refresh" class="refresh-button" title="Refresh graph" aria-label="Refresh graph"><svg class="refresh-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M20 6v5h-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 18v-5h5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19 11a7 7 0 0 0-12-4l-3 3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 13a7 7 0 0 0 12 4l3-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>' +
+		'</div>' +
+	'</div>';
+}
+
+function renderAboutDialog(): string {
+	return '<div id="about-dialog-backdrop" class="dialog-backdrop" hidden>' +
+		'<form id="about-dialog" class="new-dialog">' +
+			'<h3>About</h3>' +
+			'<div class="about-info" aria-label="About Copilot AI Customization Visualizer">' +
+				'<span><strong>Engineer:</strong> Jeffe747@github</span>' +
+				'<span><strong>Agent:</strong> ChatGpt.5.5</span>' +
+			'</div>' +
+			'<div class="dialog-actions">' +
+				'<button id="close-about" type="button">Close</button>' +
+			'</div>' +
+		'</form>' +
+	'</div>';
+}
+
+function renderSettingsDialog(isWindowModeView: boolean, colorPickerControls: string): string {
+	return '<div id="settings-dialog-backdrop" class="dialog-backdrop" hidden>' +
+		'<form id="settings-dialog" class="new-dialog settings-dialog">' +
+			'<h3>' + (isWindowModeView ? 'Window-mode Extension Settings' : 'Extension Settings') + '</h3>' +
+			'<section class="settings-section" aria-label="Layout settings">' +
+				'<h4>Layout</h4>' +
+				'<div class="settings-subsection" aria-label="Layout toggles">' +
+					'<div class="settings-subsection-title">Toggles</div>' +
+					'<div class="settings-checkbox-grid">' +
+						'<label class="settings-toggle"><input id="side-by-side-layout" type="checkbox"><span>Side-by-side layout</span></label>' +
+						'<label class="settings-toggle"><input id="hide-documentation-links" type="checkbox"><span>Hide documentation links</span></label>' +
+						'<label class="settings-toggle"><input id="element-shadows-enabled" type="checkbox"><span>Element shadows</span></label>' +
+						'<label class="settings-toggle"><input id="show-orphan-toggle" type="checkbox"><span>Show orphan toggle</span></label>' +
+						'<label class="settings-toggle"><input id="debug-messages-enabled" type="checkbox"><span>Debug messages</span></label>' +
+					'</div>' +
+				'</div>' +
+				'<div class="settings-subsection" aria-label="Layout sizing">' +
+					'<div class="settings-subsection-title">Sizing</div>' +
+					'<div class="settings-slider-grid">' +
+						'<label class="size-control" for="node-size"><span>Element size</span><input id="node-size" type="range" min="0.85" max="2" step="0.05" value="1.1"><span id="node-size-value" class="size-value">110%</span></label>' +
+						'<label class="size-control" for="text-size"><span>Editor text</span><input id="text-size" type="range" min="0.75" max="1.6" step="0.05" value="1"><span id="text-size-value" class="size-value">100%</span></label>' +
+					'</div>' +
+				'</div>' +
+			'</section>' +
+			'<section class="settings-section" aria-label="Token heatmap settings">' +
+				'<h4>Token heatmap</h4>' +
+				'<label class="settings-toggle"><input id="show-token-heatmap-toggle" type="checkbox"><span>Show visualizer toggle</span></label>' +
+				'<label class="heatmap-model-control" for="heatmap-baseline-model"><span>Default baseline model</span><select id="heatmap-baseline-model"><option value="">Use graph-relative fallback</option></select></label>' +
+				'<div class="threshold-grid">' +
+					'<label class="threshold-control" for="heatmap-medium-threshold"><span><strong>Orange threshold</strong><small>Percent of baseline context</small></span><span class="threshold-input-wrap"><input id="heatmap-medium-threshold" type="number" min="1" max="98" step="1" value="38" inputmode="numeric"><span class="threshold-unit" aria-hidden="true">%</span></span></label>' +
+					'<label class="threshold-control" for="heatmap-high-threshold"><span><strong>Red threshold</strong><small>Percent of baseline context</small></span><span class="threshold-input-wrap"><input id="heatmap-high-threshold" type="number" min="2" max="99" step="1" value="72" inputmode="numeric"><span class="threshold-unit" aria-hidden="true">%</span></span></label>' +
+				'</div>' +
+			'</section>' +
+			'<section class="settings-section" aria-label="Visualizer colors">' +
+				'<h4>Colors</h4>' +
+				'<div class="color-grid">' + colorPickerControls + '</div>' +
+			'</section>' +
+			'<div class="dialog-actions">' +
+				'<button id="close-settings" type="button">Close</button>' +
+			'</div>' +
+		'</form>' +
+	'</div>';
+}
+
+function renderNewCustomizationDialog(): string {
+	return '<div id="new-dialog-backdrop" class="dialog-backdrop" hidden>' +
+		'<form id="new-dialog" class="new-dialog">' +
+			'<h3>New customization</h3>' +
+			'<label>Type<select id="new-kind"><option value="instruction">Instruction</option><option value="skill">Skill</option><option value="prompt">Prompt</option><option value="agent">Agent</option><option value="hook">Hook</option><option value="mcp">MCP server</option></select></label>' +
+			'<label id="new-instruction-type-label" hidden>Instruction type<select id="new-instruction-type"><option value="scoped">Scoped instructions</option><option value="copilot">Copilot project instructions</option><option value="agents">All AI instructions</option><option value="claude">Claude instructions</option></select></label>' +
+			'<label id="new-name-label">Name<input id="new-name" type="text" placeholder="my-customization" autocomplete="off"></label>' +
+			'<div id="new-mcp-info" class="choice-empty" hidden>MCP servers are managed in VS Code\'s Extensions view.</div>' +
+			'<div class="dialog-actions">' +
+				'<button id="cancel-new" type="button">Cancel</button>' +
+				'<button id="submit-new" type="submit">Create</button>' +
+			'</div>' +
+		'</form>' +
+	'</div>';
+}
+
+function renderContentShell(): string {
+	return '<div id="content-shell" class="content-shell">' +
+		'<div id="inactive-overlay" class="inactive-overlay" hidden><div class="inactive-message">Window-mode is active. Use this toggle to return control here.</div></div>' +
+		renderDocumentationLinks() +
+		'<div id="workspace-panels" class="workspace-panels">' +
+			'<section class="visualizer" aria-label="Graph visualizer">' +
+				'<div id="visualizer-body" class="visualizer-body">' +
+					'<div id="graph" class="graph"><div class="graph-overlay"><div class="legend"><span><i class="swatch" style="background: var(--instruction)"></i>Instructions</span><span><i class="swatch" style="background: var(--skill)"></i>Skill</span><span><i class="swatch" style="background: var(--prompt)"></i>Prompt</span><span><i class="swatch" style="background: var(--agent)"></i>Agent</span><span><i class="swatch" style="background: var(--handoff)"></i>Handoff</span><span><i class="swatch" style="background: var(--mcp)"></i>MCP</span><span><i class="swatch" style="background: var(--hook)"></i>Hook</span></div></div><div id="status" class="status">Scanning workspace...</div></div>' +
+				'</div>' +
+			'</section>' +
+			'<section id="editor" class="editor" hidden aria-live="polite"></section>' +
+		'</div>' +
+	'</div>';
+}
+
+function renderDocumentationLinks(): string {
+	return '<div id="docs-info" class="docs-info" aria-label="VS Code Copilot customization documentation">' +
+		'<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/custom-instructions">Custom instructions documentation</button>' +
+		'<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/custom-agents">Custom agents documentation</button>' +
+		'<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/prompt-files">Prompt files documentation</button>' +
+		'<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/agent-skills">Agent skills documentation</button>' +
+		'<button class="docs-link" type="button" data-doc-url="https://code.visualstudio.com/docs/copilot/customization/hooks">Hooks documentation</button>' +
+	'</div>';
+}
+
+function renderToasts(): string {
+	return '<div id="error-toast" class="error-toast" role="alert" aria-live="assertive" hidden><div id="error-toast-message" class="error-toast-message"></div><button id="error-toast-close" class="error-toast-close" type="button" title="Dismiss error" aria-label="Dismiss error">x</button></div>' +
+		'<div id="debug-toast" class="error-toast debug-toast" role="status" aria-live="polite" hidden><div><span class="debug-toast-title">Debug</span><div id="debug-toast-message" class="error-toast-message debug-toast-message"></div></div><button id="debug-toast-close" class="error-toast-close" type="button" title="Dismiss debug message" aria-label="Dismiss debug message">x</button></div>';
+}
+
 function getNonce(): string {
 	let text = '';
 	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

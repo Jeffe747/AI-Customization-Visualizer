@@ -1,4 +1,5 @@
 # Done
+- Refactored htmlRenderer.ts into named body-section helpers so the webview shell is split into logical parts while preserving the existing HTML, CSS, and script behavior.
 - Added a visualizer setting to toggle element shadows, disabling webview surface shadows and token-heatmap glow effects when turned off.
 - Refactored the bloated extension entrypoint into focused modules for activation wiring, webview orchestration, HTML rendering, settings, scanning, diagnostics, persistence, customization helpers, tools, hooks, handoffs, paths, and VS Code resource utilities, leaving extension.ts as a thin lifecycle shim.
 - Canonicalized tool lists across file reads, editor state, and saves so raw built-in tool IDs like execute/getTerminalOutput and execute/runInTerminal no longer appear in the Tools UI.
