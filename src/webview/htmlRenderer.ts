@@ -210,7 +210,12 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			bottom: 6px;
 			z-index: 1;
 			margin: 0;
+			padding: 4px 8px;
+			border: 1px solid var(--panel-border);
+			border-radius: 999px;
 			color: var(--vscode-descriptionForeground);
+			background: color-mix(in srgb, var(--vscode-sideBar-background) 88%, transparent);
+			box-shadow: 0 6px 18px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.22));
 			font-size: 10px;
 			line-height: 1;
 			pointer-events: none;
@@ -317,6 +322,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			gap: 12px;
 			padding: 5px 10px;
 			background: color-mix(in srgb, var(--vscode-sideBar-background) 80%, transparent);
+			box-shadow: 0 10px 24px color-mix(in srgb, var(--vscode-widget-shadow, rgba(0, 0, 0, 0.24)) 82%, transparent);
 			pointer-events: none;
 		}
 
@@ -395,6 +401,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			place-items: center;
 			gap: 6px;
 			color: var(--vscode-descriptionForeground);
+			filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.18));
 			font-size: 11px;
 		}
 
@@ -1455,6 +1462,10 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			opacity: 0.9;
 		}
 
+		.node .node-visual {
+			filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.2));
+		}
+
 		.node {
 			cursor: pointer;
 		}
@@ -1468,6 +1479,11 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 		.node.selected .node-shape {
 			stroke: var(--selection);
 			stroke-width: 3;
+		}
+
+		.node:hover .node-visual,
+		.node.selected .node-visual {
+			filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.28));
 		}
 
 		.node-skill.model-invocable:not(.selected):not(:hover) .node-shape {
@@ -1674,6 +1690,21 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			filter: drop-shadow(0 0 11px #d84f4f);
 		}
 
+		body.element-shadows-disabled .graph-overlay,
+		body.element-shadows-disabled .status {
+			box-shadow: none;
+		}
+
+		body.element-shadows-disabled .plant-loader,
+		body.element-shadows-disabled .node .node-visual,
+		body.element-shadows-disabled .node:hover .node-visual,
+		body.element-shadows-disabled .node.selected .node-visual,
+		body.element-shadows-disabled .heatmap-low,
+		body.element-shadows-disabled .heatmap-medium,
+		body.element-shadows-disabled .heatmap-high {
+			filter: none;
+		}
+
 		@media (max-width: 420px) {
 			.field-row {
 				grid-template-columns: 1fr;
@@ -1728,6 +1759,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 					<div class="settings-checkbox-grid">
 						<label class="settings-toggle"><input id="side-by-side-layout" type="checkbox"><span>Side-by-side layout</span></label>
 						<label class="settings-toggle"><input id="hide-documentation-links" type="checkbox"><span>Hide documentation links</span></label>
+						<label class="settings-toggle"><input id="element-shadows-enabled" type="checkbox"><span>Element shadows</span></label>
 						<label class="settings-toggle"><input id="show-orphan-toggle" type="checkbox"><span>Show orphan toggle</span></label>
 						<label class="settings-toggle"><input id="debug-messages-enabled" type="checkbox"><span>Debug messages</span></label>
 					</div>
@@ -1810,6 +1842,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 		const heatmapHighThresholdInput = document.getElementById('heatmap-high-threshold');
 		const sideBySideInput = document.getElementById('side-by-side-layout');
 		const hideDocumentationLinksInput = document.getElementById('hide-documentation-links');
+		const elementShadowsInput = document.getElementById('element-shadows-enabled');
 		const showOrphanToggleInput = document.getElementById('show-orphan-toggle');
 		const showTokenHeatmapToggleInput = document.getElementById('show-token-heatmap-toggle');
 		const debugMessagesInput = document.getElementById('debug-messages-enabled');
@@ -1846,6 +1879,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 		let heatmapHighThreshold = readPercentSetting(initialViewSettings.heatmapHighThreshold, 0.72);
 		let sideBySideLayout = Boolean(initialViewSettings.sideBySideLayout);
 		let documentationLinksHidden = Boolean(initialViewSettings.documentationLinksHidden);
+		let elementShadowsEnabled = initialViewSettings.elementShadowsEnabled !== false;
 		let heatmapToggleVisible = Boolean(initialViewSettings.heatmapToggleVisible);
 		let orphanToggleVisible = Boolean(initialViewSettings.orphanToggleVisible);
 		let debugMessagesEnabled = Boolean(initialViewSettings.debugMessagesEnabled);
@@ -1999,6 +2033,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 
 		applySettingsToInputs();
 		applyVisualizerColors();
+		applyElementShadowMode();
 		setGraphLoading(true, 'Growing visualization...');
 		setSideBySideLayout(sideBySideLayout, false, false);
 		setDocumentationLinksHidden(documentationLinksHidden, false);
@@ -2103,6 +2138,12 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 
 		hideDocumentationLinksInput.addEventListener('change', () => {
 			setDocumentationLinksHidden(hideDocumentationLinksInput.checked);
+		});
+
+		elementShadowsInput.addEventListener('change', () => {
+			elementShadowsEnabled = elementShadowsInput.checked;
+			applyElementShadowMode();
+			persistCurrentSettings();
 		});
 
 		showTokenHeatmapToggleInput.addEventListener('change', () => {
@@ -2263,6 +2304,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			nodeSizeValue.textContent = Math.round(nodeScale * 100) + '%';
 			textSizeInput.value = String(textScale);
 			textSizeValue.textContent = Math.round(textScale * 100) + '%';
+			elementShadowsInput.checked = elementShadowsEnabled;
 			showTokenHeatmapToggleInput.checked = heatmapToggleVisible;
 			showOrphanToggleInput.checked = orphanToggleVisible;
 			debugMessagesInput.checked = debugMessagesEnabled;
@@ -2289,6 +2331,10 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 			}
 		}
 
+		function applyElementShadowMode() {
+			document.body.classList.toggle('element-shadows-disabled', !elementShadowsEnabled);
+		}
+
 		function persistCurrentSettings() {
 			vscode.postMessage({
 				type: 'settings:update',
@@ -2298,6 +2344,7 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 					documentationLinksHidden,
 					nodeScale,
 					textScale,
+					elementShadowsEnabled,
 					colors: visualizerColors,
 					heatmapToggleVisible,
 					orphanToggleVisible,
@@ -2607,13 +2654,15 @@ export function renderVisualizerHtml(webview: vscode.Webview, isWindowModeView: 
 					'<title>' + escapeHtml(title) + '</title>' +
 					'<g transform="scale(' + nodeScale + ')">' +
 					hitTarget +
-					heatmapGlow +
-					shape +
-					agentMarker +
-					skillMarker +
-					mcpMarker +
-					hookMarker +
-					handoffMarker +
+					'<g class="node-visual">' +
+						heatmapGlow +
+						shape +
+						agentMarker +
+						skillMarker +
+						mcpMarker +
+						hookMarker +
+						handoffMarker +
+					'</g>' +
 					'<text x="0" y="' + textY + '" text-anchor="middle">' + label + '</text>' +
 					(audienceLabel ? '<text class="audience-label" x="0" y="12" text-anchor="middle">Affects: ' + escapeHtml(audienceLabel) + '</text>' : '') +
 					(modelLabel ? '<text class="model-label" x="0" y="42" text-anchor="middle">' + escapeHtml(modelLabel) + '</text>' : '') +
