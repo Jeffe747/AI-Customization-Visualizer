@@ -14,7 +14,6 @@ export interface VisualizerSettings {
 	documentationLinksHidden: boolean;
 	nodeScale: number;
 	textScale: number;
-	textShadowEnabled: boolean;
 	colors: Partial<Record<VisualizerColorKey, string>>;
 	heatmapToggleVisible: boolean;
 	orphanToggleVisible: boolean;
@@ -83,7 +82,6 @@ export const defaultVisualizerSettings: VisualizerSettings = {
 	documentationLinksHidden: false,
 	nodeScale: 1.1,
 	textScale: 1,
-	textShadowEnabled: true,
 	colors: {},
 	heatmapToggleVisible: false,
 	orphanToggleVisible: false,
@@ -110,7 +108,6 @@ export function normalizeVisualizerSettings(value: unknown): VisualizerSettings 
 		documentationLinksHidden: typeof record.documentationLinksHidden === 'boolean' ? record.documentationLinksHidden : defaultVisualizerSettings.documentationLinksHidden,
 		nodeScale: readNumberInRange(record.nodeScale, 0.85, 2, defaultVisualizerSettings.nodeScale),
 		textScale: readNumberInRange(record.textScale, 0.75, 1.6, defaultVisualizerSettings.textScale),
-		textShadowEnabled: typeof record.textShadowEnabled === 'boolean' ? record.textShadowEnabled : defaultVisualizerSettings.textShadowEnabled,
 		colors: normalizeVisualizerColors(record.colors),
 		heatmapToggleVisible: typeof record.heatmapToggleVisible === 'boolean' ? record.heatmapToggleVisible : defaultVisualizerSettings.heatmapToggleVisible,
 		orphanToggleVisible: typeof record.orphanToggleVisible === 'boolean' ? record.orphanToggleVisible : defaultVisualizerSettings.orphanToggleVisible,

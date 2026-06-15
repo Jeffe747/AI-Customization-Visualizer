@@ -7,7 +7,6 @@ import { getDefaultAvailableTools } from '../tools/catalog';
 import { findOpenTextTabViewColumn, isWorkspaceResourceUri } from '../utils/vscodeResources';
 import { readString } from '../utils/values';
 import * as htmlRenderer from './htmlRenderer';
-import { ExtensionToWebviewMessage } from './protocol';
 import { VisualizerSettings, VisualizerSettingsMode, hasVisualizerColors, normalizeVisualizerSettings, sharedVisualizerSettingsStorageKey, visualizerSettingsStorageKeys } from './settings';
 
 
@@ -17,7 +16,6 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 	private cachedGraph?: GraphJson;
 	private cachedBaseModels?: { expiresAt: number; models: AvailableModel[] };
 	private refreshTimer?: NodeJS.Timeout;
-	private readonly postedMessagesForTests: unknown[] = [];
 	private readonly persistence: CustomizationPersistence;
 
 	constructor(
@@ -141,7 +139,6 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 		return {
 			...modeSettings,
 			colors: hasVisualizerColors(sharedSettings.colors) ? sharedSettings.colors : modeSettings.colors,
-			textShadowEnabled: sharedSettings.textShadowEnabled,
 			heatmapToggleVisible: sharedSettings.heatmapToggleVisible,
 			orphanToggleVisible: modeSettings.orphanToggleVisible,
 			heatmapMediumThreshold: sharedSettings.heatmapMediumThreshold,
@@ -167,7 +164,6 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 		const sharedSettings: VisualizerSettings = {
 			...existingSharedSettings,
 			colors: settings.colors,
-			textShadowEnabled: settings.textShadowEnabled,
 			heatmapToggleVisible: settings.heatmapToggleVisible,
 			heatmapMediumThreshold: settings.heatmapMediumThreshold,
 			heatmapHighThreshold: settings.heatmapHighThreshold,
@@ -224,13 +220,13 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
-		const message: ExtensionToWebviewMessage = {
+		const message = {
 			type: 'graph:update',
 			graph: this.cachedGraph,
 		};
 
 		if (targetWebview) {
-			await this.postMessageToWebview(targetWebview, message);
+			await targetWebview.postMessage(message);
 			return;
 		}
 
@@ -238,49 +234,24 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private async postWindowModeState(targetWebview?: vscode.Webview): Promise<void> {
-		const message: ExtensionToWebviewMessage = {
+		const message = {
 			type: 'window-mode:update',
 			active: Boolean(this.popoutPanel),
 		};
 
 		if (targetWebview) {
-			await this.postMessageToWebview(targetWebview, message);
+			await targetWebview.postMessage(message);
 			return;
 		}
 
 		await this.postMessageToWebviews(message);
 	}
 
-	private async postMessageToWebviews(message: ExtensionToWebviewMessage): Promise<void> {
+	private async postMessageToWebviews(message: unknown): Promise<void> {
 		await Promise.all([
-			this.postMessageToWebview(this.webviewView?.webview, message),
-			this.postMessageToWebview(this.popoutPanel?.webview, message),
-		]);
-	}
-
-	private async postMessageToWebview(webview: vscode.Webview | undefined, message: ExtensionToWebviewMessage): Promise<void> {
-		if (!webview) {
-			return;
-		}
-
-		await webview.postMessage(message);
-		this.recordPostedMessageForTests(message);
-	}
-
-	getPostedMessagesForTests(): unknown[] {
-		return [...this.postedMessagesForTests];
-	}
-
-	resetPostedMessagesForTests(): void {
-		this.postedMessagesForTests.splice(0);
-	}
-
-	private recordPostedMessageForTests(message: ExtensionToWebviewMessage): void {
-		if (this.context.extensionMode !== vscode.ExtensionMode.Test) {
-			return;
-		}
-
-		this.postedMessagesForTests.push(clonePostedMessage(message));
+			this.webviewView?.webview.postMessage(message),
+			this.popoutPanel?.webview.postMessage(message),
+		].filter((promise): promise is Thenable<boolean> => Boolean(promise)));
 	}
 
 	private getAvailableTools(graph: GraphJson): AvailableTool[] {
@@ -413,9 +384,7 @@ export class AgentVisualizerViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private getHtml(webview: vscode.Webview, isWindowModeView: boolean): string {
-		const settings = this.getVisualizerSettings(isWindowModeView ? 'window' : 'activity');
-
-		return htmlRenderer.renderVisualizerHtml(webview, isWindowModeView, settings);
+		return htmlRenderer.renderVisualizerHtml(webview, isWindowModeView, this.getVisualizerSettings(isWindowModeView ? 'window' : 'activity'));
 	}
 }
 
@@ -423,13 +392,5 @@ function formatOperationError(prefix: string, error: unknown): string {
 	const details = error instanceof Error ? error.message : String(error);
 
 	return details ? `${prefix}: ${details}` : prefix;
-}
-
-function clonePostedMessage(message: unknown): unknown {
-	try {
-		return JSON.parse(JSON.stringify(message)) as unknown;
-	} catch {
-		return message;
-	}
 }
 
